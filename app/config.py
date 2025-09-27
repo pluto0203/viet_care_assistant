@@ -24,7 +24,8 @@ class Config:
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     SECRET_KEY = os.getenv("SECRET_KEY")
     DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"
-    ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+
 
     # def validate(self):
     #     # logging.basicConfig()
@@ -38,6 +39,4 @@ class Config:
     #         print(f"Failed to connect: {e}")
 
 
-if __name__ == '__main__':
-    config = Config()
-    # config.validate()
+config = Config()

@@ -1,0 +1,33 @@
+mini-viet-care-assistant/
+├── app/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── config.py
+│   ├── database.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── user.py
+│   │   ├── faq.py
+│   │   ├── history.py
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   ├── user.py
+│   │   ├── faq.py
+│   │   ├── chat.py
+│   ├── routers/
+│   │   ├── __init__.py
+│   │   ├── auth.py
+│   │   ├── chat.py
+│   │   ├── faq.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── llm.py
+│   │   ├── tts.py
+│   │   ├── auth.py
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── logging.py
+├── frontend.py
+├── requirements.txt
+├── .env
+└── seed_db.py

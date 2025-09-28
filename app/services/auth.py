@@ -10,7 +10,9 @@ from app.config import config
 from app.database import SessionLocal
 from app.models.user import User
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 def get_password_hash(password: str) -> str:

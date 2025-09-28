@@ -27,16 +27,20 @@ class Config:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
 
 
-    # def validate(self):
-    #     # logging.basicConfig()
-    #     # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-    #     # print(f"Database URL: {self.DATABASE_URL}")
-    #     engine = create_engine(self.DATABASE_URL, poolclass=NullPool)
-    #     try:
-    #         with engine.connect() as connection:
-    #             print("Connection successful!")
-    #     except Exception as e:
-    #         print(f"Failed to connect: {e}")
+    def validate(self):
+        # logging.basicConfig()
+        # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+        # print(f"Database URL: {self.DATABASE_URL}")
+        engine = create_engine(self.DATABASE_URL, poolclass=NullPool)
+        try:
+            with engine.connect() as connection:
+                print("Connection successful!")
+        except Exception as e:
+            print(f"Failed to connect: {e}")
 
 
 config = Config()
+
+# if __name__ == '__main__':
+#     config = Config()
+#     config.validate()

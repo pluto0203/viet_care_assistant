@@ -15,4 +15,5 @@ class Message(Base):
     Sources = Column(JSONB, nullable=True)               # ví dụ: [{"doc_id":123,"chunk_id":45,"score":0.82}, ...]
     Created_at = Column(DateTime, default=datetime.now(), index=True)
 
+    #xuoi: message -> conversation
     conversation = relationship("Conversation", back_populates="messages")

@@ -14,7 +14,7 @@ class UserCreate(BaseModel):
     password: str
     role: Role
     date_of_birth: date
-    phone_number: str
+    phone: str
     email: EmailStr
 
 class UserOut(BaseModel):

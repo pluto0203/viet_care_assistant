@@ -2,7 +2,7 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.models.user import User
-from app.schemas.user import UserCreate, Token
+from app.schemas.user import UserCreate, Role, Token
 from app.services.auth import get_password_hash, verify_password, create_access_token
 from app.router.auth import register, login
 from unittest.mock import MagicMock
@@ -19,13 +19,12 @@ async def test_register_new_user():
 
     # Test user data
     user_data = UserCreate(
-        UserID=int(1001),
-        UserName="testuser",
-        hashed_password=hashed_password,
-        Role=Roles.USER,
-        DOB=datetime(1990, 1, 1).date(),
-        Phone="+0853781712",
-        email="testuser@example.com",
+        username= "testuser",
+        password= "testpassword",
+        role= Role.USER,
+        date_of_birth= datetime(2003, 12, 17),
+        phone= "0853781712",
+        email= "testuser@example.com",
     )
 
     # Call register
@@ -48,10 +47,10 @@ async def test_register_existing_user():
     user_data = UserCreate(
         username="testuser",
         password="testpassword",
-        role="user",
-        date_of_birth=datetime(1990, 1, 1).date(),
-        phone_number="+1234567890",
-        email="testuser@example.com"
+        role=Role.USER,
+        date_of_birth=datetime(2003, 12, 17),
+        phone="0853781712",
+        email="testuser@example.com",
     )
 
     # Expect HTTPException
@@ -68,10 +67,10 @@ async def test_login_success():
     mock_user = User(
         username="testuser",
         hashed_password=hashed_password,
-        role="user",
-        date_of_birth=datetime(1990, 1, 1).date(),
-        phone_number="+1234567890",
-        email="testuser@example.com"
+        role=Role.USER,
+        date_of_birth=datetime(2003, 12, 17),
+        phone="0853781712",
+        email="testuser@example.com",
     )
     db.query.return_value.filter.return_value.first.return_value = mock_user
 

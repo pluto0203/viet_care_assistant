@@ -12,13 +12,13 @@ class Roles(enum.Enum):
 
 class User(Base):
     __tablename__ = "users"
-    UserID = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    UserName = Column(String(50), unique=True, index=True, nullable=False)  # NVARCHAR -> String
-    Role = Column(Enum(Roles, name="roles_enum"), nullable=False)
-    DOB = Column(DATE, nullable=False)
-    Phone = Column(String(15), nullable=False)                               # NVARCHAR -> String
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    hashed_password = Column(String(255), nullable=False)
+    userid = Column("UserID", Integer, primary_key=True, index=True, autoincrement=True)
+    username = Column("UserName", String(50), unique=True, index=True, nullable=False)  # NVARCHAR -> String
+    role = Column("Role", Enum(Roles, name="roles_enum"), nullable=False)
+    date_of_birth = Column("DOB", DATE, nullable=False)
+    phone = Column("PhoneNum", String(15), nullable=False)                               # NVARCHAR -> String
+    email = Column("Email", String(255), unique=True, index=True, nullable=False)
+    hashed_password = Column("HashedPassword", String(255), nullable=False)
 
     #Nguoc: 1 user -> N conversations
     conversation= relationship(

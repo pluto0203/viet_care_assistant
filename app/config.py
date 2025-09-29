@@ -25,6 +25,7 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY")
     DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    JSON_URL = os.getenv("JSON_URL")
 
 
     def validate(self):

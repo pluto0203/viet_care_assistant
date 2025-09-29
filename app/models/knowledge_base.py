@@ -24,7 +24,7 @@ class KBCollection(Base):
 class KBFAQ(Base):
     __tablename__ = "kb_faq"
     id = Column("faq_id", BigInteger, primary_key=True, index=True, autoincrement=True)
-    collection_id = Column("collection_id", Integer, ForeignKey("kb_collections.collection_id", ondelete="SET NULL"), nullable=False)
+    collection_id = Column("collection_id", Integer, ForeignKey("kb_collections.collection_id", ondelete="CASCADE"), nullable=False)
     ext_id = Column("ext_id", Text)
     question = Column("question", Text, index=True)
     answer = Column("answer", Text)

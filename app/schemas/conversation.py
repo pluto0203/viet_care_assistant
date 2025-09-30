@@ -8,18 +8,18 @@ from app.schemas.message import Message
 
 
 class ConversationBase(BaseModel):
-    UserID: Optional[int] = None
-    Topic : Optional[str] = None
+    userid: Optional[int] = None
+    topic : Optional[str] = None
 
 class ConversationCreate(ConversationBase):
     pass
 
 class ConversationUpdate(BaseModel):
-    Topic: Optional[str] = None
+    topic: Optional[str] = None
 
 class ConversationInDBBase(ConversationBase):
-    ConversationID: int
-    Created_at: datetime
+    conversation_id: int
+    created_at: datetime
 
     class Config:
         from_attributes = True

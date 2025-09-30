@@ -26,6 +26,7 @@ class Config:
     DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     JSON_URL = os.getenv("JSON_URL")
+    VECTOR_STORE_PATH = os.getenv("VECTOR_STORE_PATH")
 
 
     def validate(self):

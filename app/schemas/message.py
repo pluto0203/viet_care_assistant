@@ -1,5 +1,5 @@
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, constr, validator
+from typing import Optional, List
+from pydantic import BaseModel, Field, constr
 from datetime import datetime
 from enum import Enum
 
@@ -14,7 +14,7 @@ class Source(BaseModel):
     description: Optional[str] = None
 
 class MessageBase(BaseModel):
-    ConversationId: int = Field(..., description="Message belongs to ConversationID")
+    ConversationID: int = Field(..., description="Message belongs to ConversationID")
     Role: MessageRole = Field(..., description="Message Role")
     Content: constr(min_length=1, max_length=5000) = Field(..., description="Message Content")
     Sources: Optional[List[Source]] = Field(None, description="Message sources")
@@ -27,10 +27,9 @@ class MessageUpdate(BaseModel):
     Content: Optional[constr(min_length=1, max_length=5000)] = None
     Sources: Optional[List[Source]] = None
 
-
 class MessageInDBBase(MessageBase):
     MessageId: int
-    CreatedAt: datetime
+    created_at: datetime  # Sửa từ CreatedAt
     UpdatedAt: Optional[datetime] = None
 
     class Config:

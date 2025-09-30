@@ -1,3 +1,4 @@
+# tests/test_kb_faq.py
 from fastapi.testclient import TestClient
 from app.main import app
 import json

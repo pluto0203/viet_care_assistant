@@ -7,10 +7,10 @@ from app.database import Base
 class Conversation(Base):
     __tablename__ = "conversations"
 
-    conversationid = Column("ConversationID", Integer, primary_key=True, index=True, autoincrement=True)
+    conversation_id = Column("ConversationID", Integer, primary_key=True, index=True, autoincrement=True)
     userid = Column("UserID", Integer, ForeignKey("users.UserID"), index=True, nullable=True)
     topic = Column("Topic", String(200), nullable=True)
-    create_at = Column("Create_at",DateTime, default=datetime.now(), index=True)
+    created_at = Column("Create_at",DateTime, default=datetime.now(), index=True)
 
     #xuoi: conversation -> user
     user = relationship("User", back_populates="conversation")

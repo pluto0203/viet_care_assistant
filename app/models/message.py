@@ -7,8 +7,8 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 class Message(Base):
     __tablename__ = "messages"
-    messageid = Column("MessageID",Integer, primary_key=True, index=True, autoincrement=True)
-    conversationid = Column("ConversationID", Integer, ForeignKey("conversations.ConversationID", ondelete="CASCADE"), index=True, nullable=False)
+    message_id = Column("MessageID",Integer, primary_key=True, index=True, autoincrement=True)
+    conversation_id = Column("ConversationID", Integer, ForeignKey("conversations.ConversationID", ondelete="CASCADE"), index=True, nullable=False)
 
     role = Column("Role", String(20), nullable=False)            # "user" | "assistant" | "system"
     content = Column("Content", String, nullable=False)             # dùng TEXT bằng String (SQLAlchemy map sang TEXT/VARCHAR tùy DB)

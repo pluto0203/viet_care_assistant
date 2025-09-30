@@ -1,18 +1,15 @@
 #app/schemas/user.py
 from datetime import date
 from enum import Enum
+from app.models import Roles
 
 from pydantic import BaseModel, EmailStr
 
-class Role(str, Enum):
-    ADMIN = "admin"
-    USER = "user"
-    ADVISOR = "advisor"
 
 class UserCreate(BaseModel):
     username: str
     password: str
-    role: Role
+    role: Roles
     date_of_birth: date
     phone: str
     email: EmailStr

@@ -29,7 +29,7 @@ def register(user: UserCreate, db: Session= Depends(get_db)):
             username = user.username,
             role = user.role,
             date_of_birth = user.date_of_birth,
-            phone = user.phone_number,
+            phone= user.phone,
             email = user.email,
             hashed_password= hashed_password
         )

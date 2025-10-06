@@ -68,29 +68,27 @@ async def send_message(
             raise HTTPException(status_code=404, detail="Conversation not found")
 
         # Lưu tin nhắn người dùng
-        sources = [source.model_dump() for source in message.Sources] if message.Sources else None
         user_message = MessageORM(
             conversation_id=conversation_id,
-            role=message.Role,
-            content=message.Content,
-            sources=json.dumps(sources) if sources else None
+            role=message.role,
+            content=message.content
         )
         db.add(user_message)
         db.flush()
         logger.info(f"Sent message: {user_message.content} for conversation: {conversation_id}")
 
         # Gọi RAG để lấy phản hồi nếu là tin nhắn người dùng
-        if message.Role == "user":
-            rag_response = get_response(message.Content, collection_id, db)
+        if message.role == "user":
+            rag_response = get_response(message.content, collection_id, db)
             assistant_message = MessageORM(
                 conversation_id = conversation_id,
-                role = message.Role,
+                role = "assistant",
                 content = rag_response["text"],
-                sources = json.dumps(rag_response["sources"]) if rag_response["sources"] else None
             )
             db.add(assistant_message)
             db.commit()
             db.refresh(assistant_message)
+
             logger.info(f"Sent message and received response for conversation {conversation_id}")
             return assistant_message
         else:

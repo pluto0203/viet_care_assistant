@@ -21,7 +21,7 @@ class Config:
     PORT = os.getenv("port")
     DBNAME = os.getenv("dbname")
 
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
     SECRET_KEY = os.getenv("SECRET_KEY")
     DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15

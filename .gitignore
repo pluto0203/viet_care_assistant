@@ -3,3 +3,4 @@
 .vscode/
 .env
 .gitignore
+app/vector_stores_collection_5.pkl

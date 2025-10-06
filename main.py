@@ -37,7 +37,7 @@ def debug_api_key():
 
 def check_direct_key():
     """Test với API key trực tiếp (tạm thời)"""
-    test_key = "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"
+    test_key = ""
  # Thay thế tạm bằng key thật
 
     client = OpenAI(

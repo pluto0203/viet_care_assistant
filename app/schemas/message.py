@@ -14,23 +14,21 @@ class Source(BaseModel):
     description: Optional[str] = None
 
 class MessageBase(BaseModel):
-    ConversationID: int = Field(..., description="Message belongs to ConversationID")
-    Role: MessageRole = Field(..., description="Message Role")
-    Content: constr(min_length=1, max_length=5000) = Field(..., description="Message Content")
-    Sources: Optional[List[Source]] = Field(None, description="Message sources")
+    conversation_id: int = Field(..., description="Message belongs to ConversationID")
+    role: MessageRole = Field(..., description="Message Role")
+    content: constr(min_length=1, max_length=5000) = Field(..., description="Message Content")
 
 class MessageCreate(MessageBase):
     pass
 
 class MessageUpdate(BaseModel):
-    Role: Optional[MessageRole] = None
-    Content: Optional[constr(min_length=1, max_length=5000)] = None
+    role: Optional[MessageRole] = None
+    content: Optional[constr(min_length=1, max_length=5000)] = None
     Sources: Optional[List[Source]] = None
 
 class MessageInDBBase(MessageBase):
-    MessageId: int
+    message_id: int
     created_at: datetime  # Sửa từ CreatedAt
-    UpdatedAt: Optional[datetime] = None
 
     class Config:
         from_attributes = True

@@ -9,52 +9,20 @@ from sqlalchemy.orm import Session
 from app.config import config
 from app.models import KBFAQ
 from typing import Dict, List
+from langchain_huggingface import HuggingFaceEmbeddings
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from langchain.embeddings.base import Embeddings
-from typing import List
 
-class OpenRouterEmbeddings(Embeddings):
-    def __init__(self, client):
-        self.client = client
-
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        """Tạo embedding cho danh sách văn bản."""
-        try:
-            embeddings = []
-            for text in texts:
-                response = self.client.embeddings.create(
-                    model="deepseek/deepseek-chat-v3.1:free",
-                    input=text
-                )
-                embeddings.append(response.data[0].embedding)
-            return embeddings
-        except Exception as e:
-            logger.error(f"Error creating embeddings for documents: {str(e)}")
-            raise
-
-    def embed_query(self, text: str) -> List[float]:
-        """Tạo embedding cho một chuỗi văn bản."""
-        try:
-            response = self.client.embeddings.create(
-                model="deepseek/deepseek-chat-v3.1:free",
-                input=text
-            )
-            return response.data[0].embedding
-        except Exception as e:
-            logger.error(f"Error creating embedding for query: {str(e)}")
-            raise
 
 # Khởi tạo client OpenAI với OpenRouter
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=config.OPENAI_API_KEY,
+    api_key=config.OPENROUTER_API_KEY,
 )
 
-# Tạo đối tượng embedding
-embedding_function = OpenRouterEmbeddings(client)
 
 prompt_template = """
 You are a healthcare assistant. Use the information from the knowledge base below to answer the question. If no relevant information is found, provide a general answer but prioritize the knowledge base.
@@ -62,6 +30,9 @@ Knowledge base: {context}
 Question: {question}
 Provide a concise and helpful answer in English.
 """
+
+# Initialize the embedding model
+embedder = HuggingFaceEmbeddings(model_name='all-MiniLM-L6-v2')
 
 def build_or_load_vector_store(db: Session, collection_id: int) -> FAISS:
     """
@@ -79,7 +50,7 @@ def build_or_load_vector_store(db: Session, collection_id: int) -> FAISS:
         if not faqs:
             logger.warning(f"No FAQs found in collection {collection_id}")
             # Tạo vector store rỗng với embedding_function
-            return FAISS.from_texts([""], embedding=embedding_function)
+            return FAISS.from_texts([""], embedding=embedder)
 
         docs = [
             Document(
@@ -87,7 +58,7 @@ def build_or_load_vector_store(db: Session, collection_id: int) -> FAISS:
                 metadata={"faq_id": f.faq_id, "ext_id": f.ext_id or "", "collection_id": f.collection_id}
             ) for f in faqs
         ]
-        vector_store = FAISS.from_documents(docs, embedding=embedding_function)
+        vector_store = FAISS.from_documents(docs, embedding=embedder)
 
         with open(cache_path, "wb") as f:
             pickle.dump(vector_store, f)
@@ -96,7 +67,6 @@ def build_or_load_vector_store(db: Session, collection_id: int) -> FAISS:
     except Exception as e:
         logger.error(f"Error building vector store for collection {collection_id}: {str(e)}")
         raise
-
 def invalidate_cache(collection_id: int):
     """
     Xóa cache vector store cho collection_id cụ thể.
@@ -128,7 +98,7 @@ def get_response(query: str, collection_id: int, db: Session) -> Dict[str, any]:
 
         # Gọi LLM qua OpenRouter
         response = client.chat.completions.create(
-            model="openai/gpt-4o",
+            model="deepseek/deepseek-chat-v3.1:free",
             messages=[
                 {"role": "system", "content": "You are a healthcare assistant."},
                 {"role": "user", "content": prompt}

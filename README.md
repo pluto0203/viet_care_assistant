@@ -1,4 +1,4 @@
-v# Viet Care Assistant 🤖
+# Viet Care Assistant 🤖
 
 Trợ lý y tế – Streamlit + FastAPI + RAG/LLM
 

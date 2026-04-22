@@ -1,152 +1,174 @@
-# Viet Care Assistant 🤖
+# VietCare Assistant 🏥
 
-Trợ lý y tế – Streamlit + FastAPI + RAG/LLM
+AI-powered Healthcare Q&A system with **RAG** (Retrieval-Augmented Generation), built with FastAPI.
 
-<p align="center">
-  <a href="#tính-năng-chính">Tính năng</a> •
-  <a href="#kiến-trúc--luồng-xử-lý">Kiến trúc</a> •
-  <a href="#cách-chạy">Cách chạy</a> •
-  <a href="#cấu-hình">Cấu hình</a> •
-  <a href="#api-quick-reference">API Quick Reference</a> •
-  <a href="#thư-mục--công-nghệ">Thư mục & Công nghệ</a> •
-  <a href="#xử-lý-lỗi">Xử lý lỗi</a> •
-  <a href="#liên-hệ">Liên hệ</a> •
-</p>
+> Ask health questions → AI retrieves relevant medical knowledge → generates accurate, cited answers.
 
-## Tính năng chính
+## ✨ Key Features
 
-- **Hỏi đáp y tế**: Giao diện trò chuyện đơn giản.
-- **Giao diện thân thiện**: Header rõ ràng, bong bóng chat với (user) và (assistant).
-- **Quản lý hội thoại**: Lưu lịch sử chat trong session, hỗ trợ xóa lịch sử.
-- **Bảo mật cơ bản**: Đăng ký/đăng nhập với JWT.
-- **Quản lý kiến thức**: Tạo collection (`/kb_collections`) và upload file FAQ JSON (`/kb_faq`).
-- **RAG**: Hỗ trợ RAG cho phản hồi dựa trên knowledge base.
+- 🤖 **RAG-powered Q&A** — FAISS vector search + LLM for grounded, hallucination-resistant answers
+- 💬 **Multi-turn Conversations** — context-aware follow-up questions  
+- ⚡ **Streaming Responses** — Server-Sent Events (SSE) for real-time chat UX
+- 🔐 **JWT Authentication** — secure user registration & login (Argon2 hashing)
+- 📚 **Knowledge Base Management** — upload FAQ datasets, auto-build vector stores
+- 🏥 **Health Checks** — liveness/readiness probes for production monitoring
+- 🐳 **Docker Ready** — one-command deployment with `docker compose up`
 
-**Lưu ý**: Đây là phiên bản MVP. Nếu gặp lỗi trong chat, xem phần [Xử lý lỗi](#xử-lý-lỗi).
+## 🏗️ Architecture
 
-## Kiến trúc & luồng xử lý
+```
+┌──────────────┐     ┌──────────────────────────────────────────┐
+│   Frontend   │     │              FastAPI Backend              │
+│  (Streamlit) │────▶│                                          │
+└──────────────┘     │  ┌────────┐  ┌─────────────┐  ┌──────┐  │
+                     │  │ Router │─▶│   Service   │─▶│  DB  │  │
+                     │  │ (HTTP) │  │  (Business) │  │(PgSQL)│  │
+                     │  └────────┘  └──────┬──────┘  └──────┘  │
+                     │                     │                    │
+                     │              ┌──────▼──────┐             │
+                     │              │  LLM Service │            │
+                     │              │ ┌──────────┐ │            │
+                     │              │ │  FAISS   │ │            │
+                     │              │ │ (Vector) │ │            │
+                     │              │ └──────────┘ │            │
+                     │              │ ┌──────────┐ │            │
+                     │              │ │ OpenRouter│ │            │
+                     │              │ │  (LLM)   │ │            │
+                     │              │ └──────────┘ │            │
+                     │              └──────────────┘            │
+                     └──────────────────────────────────────────┘
+```
 
-<p align="center">
-  <img src="img/vc_architect.jpg" width="600">
-  <br>
-  <em>Luồng xử lý</em>
-</p>
+## 🛠️ Tech Stack
 
+| Layer | Technology |
+|---|---|
+| **API Framework** | FastAPI (async, OpenAPI docs) |
+| **Database** | PostgreSQL (Supabase) + SQLAlchemy 2.0 |
+| **Auth** | JWT + Argon2 password hashing |
+| **AI/ML** | LangChain, FAISS, HuggingFace Embeddings |
+| **LLM Provider** | OpenRouter (DeepSeek, GPT, etc.) |
+| **Config** | Pydantic Settings (validated at startup) |
+| **Logging** | structlog (JSON in prod, colored in dev) |
+| **DevOps** | Docker, Docker Compose, GitHub Actions |
+| **Frontend** | Streamlit |
 
+## 🚀 Quick Start
 
-
-
-## Cách chạy
-
-### 1) Backend (FastAPI)
+### Option 1: Docker (Recommended)
 
 ```bash
-# Tạo virtual environment (khuyến nghị)
+# Clone & configure
+git clone https://github.com/pluto0203/viet_care_assistant.git
+cd viet_care_assistant
+cp .env.example .env  # Fill in your values
+
+# Run
+docker compose up --build
+```
+
+### Option 2: Local Development
+
+```bash
+# Create virtual environment
 python -m venv .venv
-source .venv/bin/activate  # macOS/Linux
-# hoặc .venv\Scripts\activate  # Windows
+.venv\Scripts\activate  # Windows
+# source .venv/bin/activate  # macOS/Linux
 
-# Cài dependencies
-pip install fastapi uvicorn sqlalchemy requests  # Thêm các thư viện khác nếu cần
+# Install dependencies
+pip install -e ".[dev]"
 
-# Chạy server
-uvicorn app.app_main:app --host 127.0.0.1 --port 18080
+# Configure
+cp .env.example .env  # Fill in your API keys
+
+# Run backend
+uvicorn app.app_main:app --host 127.0.0.1 --port 18080 --reload
+
+# Run frontend (separate terminal)
+streamlit run app/frontend/app.py
 ```
 
-### 2) Frontend (Streamlit)
+## 📡 API Endpoints
 
-```bash
-# Cài dependencies
-pip install streamlit requests
+| Endpoint | Method | Description |
+|---|---|---|
+| `GET /` | GET | API info |
+| `GET /health` | GET | Health check with dependency status |
+| `POST /auth/register` | POST | Create user account |
+| `POST /auth/login` | POST | Get JWT access token |
+| `POST /chat/{id}/conversations` | POST | Create conversation |
+| `POST /chat/{id}/conversations/{cid}/messages` | POST | Send message (sync) |
+| `POST /chat/{id}/conversations/{cid}/stream` | POST | Send message (SSE streaming) |
+| `POST /kb_faq/{id}/faqs/upload` | POST | Upload FAQ dataset |
 
-# Chạy UI
-streamlit run chat_ui.py
-```
+Full interactive docs at: `http://localhost:18080/docs`
 
-### 3) Sử dụng
-
-<p align="center">
-  <img src="img/chatpage.jpg">
-  <br>
-  <em>Giao diện Chat</em>
-</p>
-
-
-1. **Đăng ký**: Tạo tài khoản qua tab "Đăng ký" (username, password, role, date_of_birth: YYYY-MM-DD, phone, email).
-2. **Đăng nhập**: Dùng username/password để lấy `access_token`.
-3. **Tạo Collection**: Tạo knowledge base collection (tên, mô tả, ngôn ngữ: vi/en).
-4. **Upload FAQ**: Upload file JSON FAQ vào collection (mặc định `collection_id=5`).
-5. **Chat**: Gửi câu hỏi y tế (VD: "Triệu chứng đau đầu là gì?").
-6. **Xóa lịch sử**: Nhấn nút "Xóa lịch sử chat" để reset.
-
-## Cấu hình
-
-- **BASE_URL** (frontend): Trong `chat_ui.py`:
-  ```python
-  BASE_URL = "http://127.0.0.1:18080"
-  ```
-  Đổi sang domain/port phù hợp khi deploy.
-
-## API Quick Reference
-
-| Endpoint | Method | Body                                                                                                                   | Ghi chú |
-|----------|--------|------------------------------------------------------------------------------------------------------------------------|---------|
-| `/auth/register` | POST | `{"username": "...", "password": "...", "role": "...", "date_of_birth": "YYYY-MM-DD", "phone": "...", "email": "..."}` | Đăng ký người dùng |
-| `/auth/login` | POST | `{"username": "...", "password": "..."}`                                                                               | Trả về `access_token` |
-| `/kb_collections/collections/` | POST | `{"name": "...", "description": "...", "language": "vi/en"}`                                                           | Tạo collection |
-| `/kb_faq/{collection_id}/faqs/upload` | POST | `multipart/form-data` (file JSON)                                                                                      | Upload FAQ |
-| `/chat/{collection_id}/conversations` | POST | `{"userid": "...", "topic": "..."}`                                                                                    | Tạo conversation |
-| `/chat/{collection_id}/conversations/{conversation_id}/messages` | POST | `{"role": "user", "content": "..."}`                                                                                   | Gửi tin nhắn, nhận phản hồi LLM |
-
-**Test mặc định**: Sử dụng `/chat/5/conversations/14/messages` với body `{"role": "user", "content": "Xin chào"}`.
-
-## Thư mục & Công nghệ
+## 📂 Project Structure
 
 ```
-.             
+vietcare-assistant/
 ├── app/
-│   ├── frontend/
-│   │   ├── app.py                 
-│   ├── app_main.py
-│   ├── router/
+│   ├── app_main.py          # FastAPI entry point + middleware
+│   ├── config.py             # Pydantic Settings
+│   ├── database.py           # SQLAlchemy engine & session
+│   ├── core/
+│   │   ├── exceptions.py     # Custom exception hierarchy
+│   │   └── logging.py        # Structured logging setup
+│   ├── models/               # SQLAlchemy ORM models
+│   ├── schemas/              # Pydantic request/response schemas
+│   ├── router/               # HTTP route handlers (thin)
 │   │   ├── auth.py
 │   │   ├── chat.py
+│   │   ├── health.py
 │   │   ├── kb_collection.py
-│   │   ├── kb_faq.py
-│   ├── database.py
-│   ├── models/
-│   │   ├── user.py
-│   │   ├── knowledge_base.py
-│   ├── schemas/
-│   │   ├── user.py
-│   │   ├── conversation.py
-│   │   ├── message.py
-│   │   ├── kb_collection.py
-│   │   ├── kb_faq.py
-│   ├── services/
+│   │   └── kb_faq.py
+│   ├── services/             # Business logic layer
 │   │   ├── auth.py
+│   │   ├── chat_service.py
 │   │   ├── llm.py
-│   │   ├── upload_faq.py
-│   ├── config.py
-├── requirements.txt       
-├── requirements-frontend.txt  
-└── README.md
+│   │   └── upload_faq.py
+│   └── frontend/             # Streamlit UI
+├── tests/                    # Unit & integration tests
+├── data/                     # FAQ datasets
+├── Dockerfile
+├── docker-compose.yml
+├── pyproject.toml
+└── .env.example
 ```
 
-## Xử lý lỗi
+## 🧪 Testing
 
-- **401 Unauthorized**: Nếu `/chat` yêu cầu `Authorization: Bearer <token>`, cập nhật hàm `send_message` trong `chat_ui.py`:
-  ```python
-  headers = {"Authorization": f"Bearer {st.session_state.user['access_token']}"}
-  response = requests.post(MESSAGE_URL, json=data, headers=headers)
-  ```
-- **404 Not Found**: Kiểm tra `collection_id` và `conversation_id` trong database.
-- **500 Internal Server Error**: Kiểm tra log backend (SQLAlchemyError hoặc lỗi RAG trong `llm.py`).
+```bash
+# Run all tests
+pytest
 
+# With coverage report
+pytest --cov=app --cov-report=html
 
-## Góp ý & liên hệ
+# Run specific test file
+pytest tests/test_auth.py -v
+```
 
-Nếu thấy hữu ích hoặc cần tính năng mới, hãy mở Issue/PR trên repository. 🙌  
-Liên hệ: 
-- **Email**: duynvt.work@gmail.com
-- **LinkedIn**: www.linkedin.com/in/duynvt0203
+## 🔑 Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `user` | ✅ | Database username |
+| `password` | ✅ | Database password |
+| `host` | ✅ | Database host |
+| `port` | ❌ | Database port (default: 5432) |
+| `dbname` | ✅ | Database name |
+| `SECRET_KEY` | ✅ | JWT signing key |
+| `OPENROUTER_API_KEY` | ✅ | OpenRouter API key |
+| `LLM_MODEL` | ❌ | LLM model (default: deepseek) |
+| `DEBUG` | ❌ | Debug mode (default: false) |
+
+## 📄 License
+
+MIT
+
+## 👤 Author
+
+**Duy Nguyen**  
+📧 duynvt.work@gmail.com  
+🔗 [LinkedIn](https://www.linkedin.com/in/duynvt0203)

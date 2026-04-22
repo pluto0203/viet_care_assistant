@@ -1,10 +1,15 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 from app.database import Base
+
+
+def _utcnow():
+    return datetime.now(timezone.utc)
+
 
 class Language(str, Enum):
     EN = "en"
@@ -17,8 +22,8 @@ class KBCollection(Base):
     name = Column("collection_name", String(50), unique=True, index=True, nullable=False)
     description = Column("description", Text)
     language = Column("language", String(16), default=Language.EN)
-    created_at = Column("created_at", DateTime, default=datetime.now())
-    updated_at = Column("updated_at", DateTime, default=datetime.now(), onupdate=datetime.now())
+    created_at = Column("created_at", DateTime, default=_utcnow)
+    updated_at = Column("updated_at", DateTime, default=_utcnow, onupdate=_utcnow)
 
     faqs = relationship("KBFAQ", back_populates="collection")
 
@@ -32,8 +37,8 @@ class KBFAQ(Base):
     topic = Column("topic", Text, index=True)
     tags_json = Column("tags_json", JSONB, nullable=True)
     source = Column("source", JSONB, nullable=True)
-    updated_at = Column("updated_at", DateTime, default=datetime.now(), onupdate=datetime.now())
-    created_at = Column("created_at", DateTime, default=datetime.now())
+    updated_at = Column("updated_at", DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column("created_at", DateTime, default=_utcnow)
 
     collection = relationship("KBCollection", back_populates="faqs")
     embeddings = relationship("KBFAQEmbedding", back_populates="faq", cascade="all, delete-orphan")
@@ -45,6 +50,6 @@ class KBFAQEmbedding(Base):
     model = Column("model", String(100), nullable=False)
     dim = Column("dim", Integer, nullable=False)
     vector_json = Column("vector_json", JSONB, nullable=False)
-    created_at = Column("created_at", DateTime, default=datetime.now())
+    created_at = Column("created_at", DateTime, default=_utcnow)
 
     faq = relationship("KBFAQ", back_populates="embeddings")

@@ -3,6 +3,7 @@
 Chat Router — thin HTTP adapter.
 All business logic lives in ChatService.
 """
+import asyncio
 import json
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -58,7 +59,8 @@ async def send_message(
 ):
     """Send a message and receive an AI response (non-streaming)."""
     try:
-        return service.send_message(
+        return await asyncio.to_thread(
+            service.send_message,
             collection_id=collection_id,
             conversation_id=conversation_id,
             content=message.content,

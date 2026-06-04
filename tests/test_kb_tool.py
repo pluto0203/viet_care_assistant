@@ -17,7 +17,7 @@ def test_schema_query_is_required():
     assert "query" in required
 
 
-def test_search_returns_formatted_string():
+def test_search_returns_formatted_string_and_sources():
     mock_llm = MagicMock()
     mock_llm.retrieve_context.return_value = (
         "Headache can be caused by stress.",
@@ -25,18 +25,20 @@ def test_search_returns_formatted_string():
     )
     mock_db = MagicMock()
 
-    result = search_knowledge_base(query="headache", collection_id=1, llm_service=mock_llm, db=mock_db)
+    result_str, sources = search_knowledge_base(query="headache", collection_id=1, llm_service=mock_llm, db=mock_db)
 
     mock_llm.retrieve_context.assert_called_once_with("headache", mock_db, 1)
-    assert "Headache can be caused by stress." in result
+    assert "Headache can be caused by stress." in result_str
+    assert sources == [{"url": "faq://1", "title": "FAQ 1"}]
 
 
-def test_search_empty_context_returns_string():
+def test_search_empty_context_returns_tuple():
     mock_llm = MagicMock()
     mock_llm.retrieve_context.return_value = ("", [])
     mock_db = MagicMock()
 
-    result = search_knowledge_base(query="xyz", collection_id=1, llm_service=mock_llm, db=mock_db)
+    result_str, sources = search_knowledge_base(query="xyz", collection_id=1, llm_service=mock_llm, db=mock_db)
 
-    assert isinstance(result, str)
-    assert len(result) > 0
+    assert isinstance(result_str, str)
+    assert len(result_str) > 0
+    assert sources == []

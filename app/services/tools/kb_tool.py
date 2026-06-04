@@ -29,10 +29,10 @@ def search_knowledge_base(
     collection_id: int,
     llm_service: LLMService,
     db: Session,
-) -> str:
-    """Execute KB search and return formatted context string."""
+) -> tuple[str, list]:
+    """Execute KB search. Returns (tool_result_str, sources_list)."""
     context, sources = llm_service.retrieve_context(query, db, collection_id)
     if not context:
-        return "Không tìm thấy thông tin liên quan trong knowledge base."
+        return "Không tìm thấy thông tin liên quan trong knowledge base.", []
     source_titles = ", ".join(s["title"] for s in sources) if sources else "N/A"
-    return f"Knowledge base results (sources: {source_titles}):\n{context}"
+    return f"Knowledge base results (sources: {source_titles}):\n{context}", sources

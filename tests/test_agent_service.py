@@ -1,12 +1,14 @@
 # tests/test_agent_service.py
 import json
+import pytest
 from unittest.mock import MagicMock
 from app.services.agent_service import AgentService
+from app.core.exceptions import LLMServiceError
 
 
 def _make_llm_mock():
     mock = MagicMock()
-    mock.retrieve_context.return_value = ("some context", [])
+    mock.retrieve_context.return_value = ("some context", [{"url": "faq://1", "title": "FAQ 1"}])
     return mock
 
 
@@ -73,16 +75,30 @@ def test_run_calls_kb_tool_and_retrieve_context_is_called():
     assert args[2] == 1
 
 
-def test_run_returns_fallback_after_max_iterations():
+def test_run_accumulates_sources_from_kb_tool():
+    mock_llm = _make_llm_mock()
+    tool_call = _make_tool_call("c1", "search_knowledge_base", {"query": "fever"})
+
+    mock_llm.client.chat.completions.create.side_effect = [
+        _make_completion(tool_calls=[tool_call]),
+        _make_completion(content="Answer with sources."),
+    ]
+
+    service = AgentService(mock_llm)
+    result = service.run(query="fever", collection_id=1, db=MagicMock())
+
+    assert result["sources"] == [{"url": "faq://1", "title": "FAQ 1"}]
+
+
+def test_run_raises_on_max_iterations():
     mock_llm = _make_llm_mock()
     tool_call = _make_tool_call("c1", "search_knowledge_base", {"query": "test"})
     mock_llm.client.chat.completions.create.return_value = _make_completion(tool_calls=[tool_call])
 
     service = AgentService(mock_llm)
-    result = service.run(query="test", collection_id=1, db=MagicMock())
+    with pytest.raises(LLMServiceError):
+        service.run(query="test", collection_id=1, db=MagicMock())
 
-    assert "text" in result
-    assert len(result["text"]) > 0
     assert mock_llm.client.chat.completions.create.call_count == AgentService.MAX_ITERATIONS
 
 
@@ -103,19 +119,18 @@ def test_run_unknown_tool_does_not_crash():
 
 # ── stream() tests ──
 
-def test_stream_yields_chunks_when_no_tools():
+def test_stream_yields_phase1_answer_directly_when_no_tools():
+    """No tools called → yield Phase 1 answer, make only 1 LLM call total."""
     mock_llm = _make_llm_mock()
-
-    mock_llm.client.chat.completions.create.side_effect = [
-        _make_completion(content=None, tool_calls=None),
-        iter([_make_stream_chunk("Hello "), _make_stream_chunk("world")]),
-    ]
+    mock_llm.client.chat.completions.create.return_value = _make_completion(
+        content="Direct answer.", tool_calls=None
+    )
 
     service = AgentService(mock_llm)
     chunks = list(service.stream(query="hello", collection_id=1, db=MagicMock()))
 
-    assert "Hello " in chunks
-    assert "world" in chunks
+    assert chunks == ["Direct answer."]
+    assert mock_llm.client.chat.completions.create.call_count == 1  # only 1 LLM call
 
 
 def test_stream_resolves_tool_then_streams():
@@ -123,9 +138,9 @@ def test_stream_resolves_tool_then_streams():
     tool_call = _make_tool_call("c1", "search_knowledge_base", {"query": "fever"})
 
     mock_llm.client.chat.completions.create.side_effect = [
-        _make_completion(tool_calls=[tool_call]),
-        _make_completion(content=None, tool_calls=None),
-        iter([_make_stream_chunk("Fever answer "), _make_stream_chunk("streamed.")]),
+        _make_completion(tool_calls=[tool_call]),           # phase 1: tool call
+        _make_completion(content=None, tool_calls=None),    # phase 1: no more tools → break
+        iter([_make_stream_chunk("Fever answer "), _make_stream_chunk("streamed.")]),  # phase 2
     ]
 
     service = AgentService(mock_llm)
@@ -133,23 +148,26 @@ def test_stream_resolves_tool_then_streams():
 
     assert "Fever answer " in chunks
     mock_llm.retrieve_context.assert_called_once()
+    assert mock_llm.client.chat.completions.create.call_count == 3
 
 
-def test_stream_yields_fallback_on_max_iterations():
+def test_stream_raises_on_max_iterations():
+    """MAX_ITERATIONS → raises LLMServiceError, does NOT yield error string."""
     mock_llm = _make_llm_mock()
     tool_call = _make_tool_call("c1", "search_knowledge_base", {"query": "test"})
     mock_llm.client.chat.completions.create.return_value = _make_completion(tool_calls=[tool_call])
 
     service = AgentService(mock_llm)
-    chunks = list(service.stream(query="test", collection_id=1, db=MagicMock()))
-
-    assert len(chunks) == 1
-    assert len(chunks[0]) > 0
+    with pytest.raises(LLMServiceError):
+        list(service.stream(query="test", collection_id=1, db=MagicMock()))
 
 
 def test_stream_skips_none_chunks():
     mock_llm = _make_llm_mock()
+    tool_call = _make_tool_call("c1", "search_knowledge_base", {"query": "test"})
+
     mock_llm.client.chat.completions.create.side_effect = [
+        _make_completion(tool_calls=[tool_call]),
         _make_completion(content=None, tool_calls=None),
         iter([_make_stream_chunk("text"), _make_stream_chunk(None), _make_stream_chunk("more")]),
     ]
@@ -160,3 +178,12 @@ def test_stream_skips_none_chunks():
     assert None not in chunks
     assert "text" in chunks
     assert "more" in chunks
+
+
+def test_stream_raises_on_phase1_llm_error():
+    mock_llm = _make_llm_mock()
+    mock_llm.client.chat.completions.create.side_effect = Exception("API error")
+
+    service = AgentService(mock_llm)
+    with pytest.raises(LLMServiceError):
+        list(service.stream(query="test", collection_id=1, db=MagicMock()))

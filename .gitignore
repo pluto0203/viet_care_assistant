@@ -43,3 +43,6 @@ docker-compose.override.yml
 
 # Alembic
 alembic/versions/*.pyc
+
+# Superpowers (AI planning artifacts)
+docs/superpowers/

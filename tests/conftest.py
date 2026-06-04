@@ -85,6 +85,20 @@ def auth_headers(client, test_user):
 
 
 @pytest.fixture
+def mock_agent_service():
+    """Mocked AgentService — no real LLM or tool calls in tests."""
+    with patch("app.services.chat_service.AgentService") as mock_cls:
+        service = MagicMock()
+        service.run.return_value = {
+            "text": "This is a test agent response.",
+            "sources": [],
+        }
+        service.stream.return_value = iter(["Test ", "streaming ", "response."])
+        mock_cls.return_value = service
+        yield service
+
+
+@pytest.fixture
 def mock_llm_service():
     """Mocked LLM service — no real API calls in tests."""
     with patch("app.services.llm.get_llm_service") as mock:

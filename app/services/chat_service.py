@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Conversation as ConversationORM, Message as MessageORM, KBCollection
 from app.services.llm import LLMService
+from app.services.agent_service import AgentService
 from app.core.exceptions import CollectionNotFound, ConversationNotFound
 from app.core.logging import get_logger
 
@@ -22,6 +23,7 @@ class ChatService:
     def __init__(self, db: Session, llm_service: LLMService):
         self.db = db
         self.llm = llm_service
+        self.agent = AgentService(llm_service)
 
     # ── Validation Helpers ──
 
@@ -110,8 +112,8 @@ class ChatService:
         # Get conversation history for multi-turn context
         history = self._get_conversation_history(conversation_id)
 
-        # Call RAG + LLM
-        rag_response = self.llm.get_response(
+        # Run Agent (tool-calling loop + LLM)
+        rag_response = self.agent.run(
             query=content,
             collection_id=collection_id,
             db=self.db,
@@ -161,9 +163,9 @@ class ChatService:
         # Get history
         history = self._get_conversation_history(conversation_id)
 
-        # Stream from LLM
+        # Stream from Agent
         full_response = []
-        for chunk in self.llm.get_streaming_response(
+        for chunk in self.agent.stream(
             query=content,
             collection_id=collection_id,
             db=self.db,

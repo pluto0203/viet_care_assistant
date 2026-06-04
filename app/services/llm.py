@@ -126,7 +126,7 @@ class LLMService:
 
     # ── Retrieval ──
 
-    def _retrieve_context(self, query: str, db: Session, collection_id: int) -> tuple[str, list]:
+    def retrieve_context(self, query: str, db: Session, collection_id: int) -> tuple[str, list]:
         """Retrieve relevant documents from vector store."""
         vector_store = self.build_or_load_vector_store(db, collection_id)
         retriever = vector_store.as_retriever(search_kwargs={"k": config.RAG_TOP_K})
@@ -172,7 +172,7 @@ class LLMService:
         Returns: {"text": "...", "sources": [...]}
         """
         try:
-            context, sources = self._retrieve_context(query, db, collection_id)
+            context, sources = self.retrieve_context(query, db, collection_id)
             messages = self._build_messages(query, context, history)
 
             response = self.client.chat.completions.create(
@@ -208,7 +208,7 @@ class LLMService:
         Yields text chunks as they arrive from the LLM.
         """
         try:
-            context, sources = self._retrieve_context(query, db, collection_id)
+            context, sources = self.retrieve_context(query, db, collection_id)
             messages = self._build_messages(query, context, history)
 
             stream = self.client.chat.completions.create(

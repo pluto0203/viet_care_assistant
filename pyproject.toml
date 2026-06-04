@@ -24,6 +24,7 @@ dependencies = [
     "faiss-cpu>=1.7",
     "sentence-transformers>=2.2",
     "structlog>=24.0",
+    "httpx>=0.27",
 ]
 
 [project.optional-dependencies]
